@@ -76,23 +76,27 @@ BOOL usb_msc_not_ejected(void)
 	return (ejected == 0)?TRUE:FALSE;
 }
 
+#define ISP_PORT 2
+#define ISP_PIN 11
 // from sbl_iap
 BOOL bootloader_button_pressed(void)
 {
-	/* Configure bootloader IO button P4.29 */
+//	return TRUE;
+
+	/* Configure bootloader IO button P0.26 */
 	PINSEL_CFG_Type pin;
-	pin.Portnum = 4;
-	pin.Pinnum = 29;
+	pin.Portnum = ISP_PORT;
+	pin.Pinnum = ISP_PIN;
 	pin.Funcnum = PINSEL_FUNC_0;
 	pin.Pinmode = PINSEL_PINMODE_PULLUP;
 	pin.OpenDrain = PINSEL_PINMODE_NORMAL;
 	PINSEL_ConfigPin(&pin);
 
 	/* set as input */
-	GPIO_SetDir(4, (1<<29), 0);
+	GPIO_SetDir(ISP_PORT, (1<<ISP_PIN), 0);
 
 	/* Verify if bootloader pin is activated */
-	if(GPIO_ReadValue(4) & (1<<29))
+	if(GPIO_ReadValue(ISP_PORT) & (1<<ISP_PIN))
 		return FALSE;
 	return TRUE;
 }
@@ -110,6 +114,20 @@ int main() {
 	NVIC_SetPriorityGrouping(0x05);
 
 	NVIC_SetVTOR(0x00000000);
+
+#define LED_PORT 0
+#define LED_PIN 22
+
+        pin_mode(LED_PORT, LED_PIN, OUTPUT);
+
+	for(int j=0;j<10;j++)
+	{
+	  for(int i=0;i<100000;i++)
+   	    digital_write(LED_PORT, LED_PIN, 0);
+	  for(int i=0;i<100000;i++)
+   	    digital_write(LED_PORT, LED_PIN, 1);
+	}
+
 
 	/*
 	 * Disable some pins like the ones for heaters while on bootloader, if not, the heaters would be ON
@@ -150,6 +168,7 @@ int main() {
 
 	#ifdef	UARTDEBUG
 		uart_init();
+		DBG("R2C2 USB Bootloader " __DATE__ " " __TIME__ );
 	#endif
 
         if (BlockDevInit() == 0)
