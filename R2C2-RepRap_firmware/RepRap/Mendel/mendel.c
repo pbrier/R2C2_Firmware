@@ -46,6 +46,7 @@
 
 #include "planner.h"
 #include "stepper.h"
+#include "inkshield.h"
 
 
 tTimer temperatureTimer;
@@ -116,6 +117,8 @@ void io_init(void)
   extruder_fan_off();
 
   adc_init();
+  ink_init();
+   
 }
 
 void temperatureTimerCallback (tTimer *pTimer)
@@ -157,7 +160,7 @@ int app_main (void)
 {
   long timer1 = 0;
   eParseResult parse_result;
-
+  
   buzzer_init();
   buzzer_play(1500, 100); /* low beep */
 	buzzer_wait();

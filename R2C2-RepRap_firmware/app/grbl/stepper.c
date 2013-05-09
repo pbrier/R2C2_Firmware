@@ -49,6 +49,8 @@
 
 #include "endstops.h"
 
+#include "inkshield.h"
+
 // Some useful constants
 #define STEP_MASK       ((1<<X_STEP_BIT)|(1<<Y_STEP_BIT)|(1<<Z_STEP_BIT)) // All step bits
 #define DIRECTION_MASK  ((1<<X_DIRECTION_BIT)|(1<<Y_DIRECTION_BIT)|(1<<Z_DIRECTION_BIT)) // All direction bits
@@ -169,6 +171,7 @@ static inline void  set_direction_pins (void)
 // step selected pins (output high)
 static inline void  set_step_pins (void) 
 {
+  static int nn=0;
   // XYZ Steppers on same port
 #ifdef STEP_LED_FLASH_VARIABLE
   if (step_bits_xyz & (1<<X_STEP_BIT))
@@ -190,6 +193,8 @@ static inline void  set_step_pins (void)
   // extruder stepper    
   if (step_bits_e)
   {
+    ink_fire(nn++);
+	if ( nn > 11 ) nn = 0;
 #ifdef STEP_LED_FLASH_VARIABLE
     if (step_bits_e & (1<<E_STEP_BIT))
     {

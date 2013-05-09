@@ -44,6 +44,7 @@
 #include "planner.h"
 #include "stepper.h"
 #include "geometry.h"
+#include "inkshield.h"
 
 FIL       file;
 uint32_t  filesize = 0;
@@ -822,7 +823,7 @@ eParseResult process_gcode_command()
 
       // M115- report firmware version
       case 115:
-      sersendf("FIRMWARE_NAME:Teacup_R2C2 FIRMWARE_URL:http%%3A//github.com/bitboxelectronics/R2C2 PROTOCOL_VERSION:1.0 MACHINE_TYPE:Mendel\r\n");
+      sersendf("FIRMWARE_NAME:Teacup_R2C2 with inkshield FIRMWARE_URL:http%%3A//github.com/bitboxelectronics/R2C2 PROTOCOL_VERSION:1.0 MACHINE_TYPE:Mendel COMPILED:" __DATE__  "\r\n");
       break;
 
       // M116 - Wait for all temperatures and other slowly-changing variables to arrive at their set values.
@@ -1199,6 +1200,18 @@ eParseResult process_gcode_command()
       case 606:
       enqueue_wait();
       break;
+	  
+	  // M700 - Set nozzles to eject
+      case 700:
+	    if (next_target.seen_S)
+          ink_enable(next_target.S);
+      break;
+	  
+      // M701 - Set pulse length for drop ejection
+	  case 701:
+	    if (next_target.seen_S)
+          ink_set_pulse_length(next_target.S);
+	    break;
 
       // unknown mcode: spit an error
       default:

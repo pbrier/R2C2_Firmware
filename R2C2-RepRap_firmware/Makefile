@@ -138,6 +138,7 @@ APPSRC = \
 	$(APPDIR)/gcode_process.c \
 	$(APPDIR)/mendel.c \
 	$(APPDIR)/temp.c \
+	$(APPDIR)/inkshield.c \
 	$(APPDIR)/config.c \
 	$(APPDIR)/endstops.c \
 	$(APPDIR)/geometry.c \
