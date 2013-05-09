@@ -51,13 +51,16 @@ uint16_t temp_get_target(uint8_t sensor_number);
 // true if last read temp is close to target temp, false otherwise
 uint8_t temp_achieved(uint8_t sensor_number);
 
+// true if last read temp is close to target temp, false otherwise -- works for extruder and bed temperatures
+uint8_t temps_achieved (void);
+
 // send current temperature to host
 void temp_print(void);
 
 // periodically read temperature and update heater with PID
 void temp_tick(void);
 
-#define NUMTEMPS 31
+#define NUMTEMPS 14
 extern uint16_t temptable[NUMTEMPS][3];
 
 bool      temp_set_table_entry (uint8_t sensor_number, uint16_t temp, uint16_t adc_val);
