@@ -388,6 +388,26 @@ void sd_seek(FIL *pFile, unsigned pos)
   f_lseek (pFile, pos);
 }
 
+
+// Send hex encoded string to the inkshield buffer (format 2bytes/char: '0011AABB....' ignore any chars not [0-9][A-F])
+void send_hex(char *str)
+{
+  int c1=-1, c0=-1;
+ for(; *str;  str++)
+  {
+    if ( *str == 0 ) return; // end of string
+    if ( (*str < '0' || *str > 'F') || ( *str > '9' && *str < 'A') ) 
+    continue; // ignore
+    c0 = (*str >= 'A' ? *str - 'A' + 10 : *str-'0'); // convert hex nibble to decimal value
+    if ( c1 >= 0 )
+    {
+      ink_send(c1*16 + c0);
+      c1 = -1;
+    }
+    else 
+      c1 = c0;
+  }
+}
 /****************************************************************************
  *                                                                           *
  * Command Received - process it                                             *
@@ -823,7 +843,7 @@ eParseResult process_gcode_command()
 
       // M115- report firmware version
       case 115:
-      sersendf("FIRMWARE_NAME:Teacup_R2C2 with inkshield FIRMWARE_URL:http%%3A//github.com/bitboxelectronics/R2C2 PROTOCOL_VERSION:1.0 MACHINE_TYPE:Mendel COMPILED:" __DATE__  "\r\n");
+      sersendf("FIRMWARE_NAME:Teacup_R2C2 with inkshield FIRMWARE_URL:http%%3A//github.com/bitboxelectronics/R2C2 PROTOCOL_VERSION:1.0 MACHINE_TYPE:Mendel COMPILED:" __DATE__ " TIME:" __TIME__  "\r\n");
       break;
 
       // M116 - Wait for all temperatures and other slowly-changing variables to arrive at their set values.
@@ -1204,7 +1224,10 @@ eParseResult process_gcode_command()
 	  // M700 - Set nozzles to eject
       case 700:
 	    if (next_target.seen_S)
+		{
           ink_enable(next_target.S);
+		  sersendf("enable: %d\r\n", next_target.S);
+		}
       break;
 	  
       // M701 - Set pulse length for drop ejection
@@ -1213,6 +1236,12 @@ eParseResult process_gcode_command()
           ink_set_pulse_length(next_target.S);
 	    break;
 
+// M702: Write data to inkshield buffer. We use the "filename" variable to hold the string to send, (it is HEX encoded, xAABB..)
+// if S is specified, reset the buffer pointer (start new line)
+      case 702:   
+        ink_reset();
+        send_hex(next_target.filename);
+        break;
       // unknown mcode: spit an error
       default:
       serial_writestr("E: Bad M-code ");

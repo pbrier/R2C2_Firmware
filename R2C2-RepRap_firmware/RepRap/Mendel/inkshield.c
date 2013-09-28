@@ -38,6 +38,16 @@
 static unsigned int ink_enable_mask = 0xFFFF;
 static unsigned int ink_pulse_length = 20;
 
+#define INK_BUFFER 512 // nr of bytes in inkshield buffer
+static unsigned char ink_buffer[INK_BUFFER];
+static int ink_write = 0;
+static int ink_read = 0;
+static int ink_read_mask = 1; 
+static int ink_nozzle = 0; // 0..11
+
+
+
+
 /* 
  * Configure pin for output 
  */
@@ -55,6 +65,35 @@ void ink_pin_cfg(int port, int pin)
   pin_mode(port,pin,OUTPUT);
 }
 
+
+
+/**
+*** Reset the ink buffer
+**/
+void ink_reset()
+{
+  sersendf("write/read: %d %d\r\n", ink_write, ink_read);
+  ink_write = 0;
+  ink_read = 0;
+  ink_buffer[0] = 0;
+  ink_enable_mask = 0;
+  ink_nozzle = 0;
+  ink_read_mask = 1;
+}
+
+/**
+*** Send byte to ink buffer
+**/
+void ink_send(unsigned int n)
+{
+  ink_buffer[ink_write] = n;
+  ink_write++;
+  if ( ink_write >= INK_BUFFER )
+    ink_write = 0;
+}
+
+
+
 /**
 *** Initialize the inkshield I/O
 **/
@@ -65,6 +104,7 @@ void ink_init()
   ink_pin_cfg(INK_C_PORT, INK_C_BIT);
   ink_pin_cfg(INK_D_PORT, INK_D_BIT);
   ink_pin_cfg(INK_P_PORT, INK_P_BIT);
+  ink_reset();
 }
 
 /* Enable specific nozzles */
@@ -86,20 +126,36 @@ void ink_set_pulse_length(unsigned int len)
 void ink_fire(unsigned int c)
 {
   int val;
-  val = 
-   (c & 1 ? INK_A_BIT : 0) |
-   (c & 2 ? INK_B_BIT : 0) |
-   (c & 4 ? INK_C_BIT : 0) |
-   (c & 8 ? INK_D_BIT : 0);
   
-  if ( ink_enable_mask & (1<<c) )
+  val = 
+   (ink_nozzle & 1 ? INK_A_BIT : 0) |
+   (ink_nozzle & 2 ? INK_B_BIT : 0) |
+   (ink_nozzle & 4 ? INK_C_BIT : 0) |
+   (ink_nozzle & 8 ? INK_D_BIT : 0);
+  if ( ink_buffer[ink_read] & ink_read_mask )
   {
     digital_write(INK_A_PORT, val, 1 );
     digital_write(INK_A_PORT, val, 1 );
     for(int i=0; i<ink_pulse_length; i++) // effectively a delay
       digital_write(INK_P_PORT, INK_P_BIT, 1 );
     digital_write(INK_P_PORT, INK_P_BIT, 0 );
-	digital_write(INK_A_PORT, val,0 );
+    digital_write(INK_A_PORT, val,0 );
+  }
+
+  // Increment nozzle number and data bit/byte pointers
+  ink_nozzle++;
+  if ( ink_nozzle > 11) 
+    ink_nozzle = 0;
+  ink_read_mask = ink_read_mask << 1;
+  if ( ink_read_mask > 128 )
+  {
+    ink_read_mask = 1;
+    ink_read++;
+  }    
+  if ( ink_read >= ink_write ) 
+  {
+    ink_read = 0;
+    ink_read_mask = 1;
   }
 }
 

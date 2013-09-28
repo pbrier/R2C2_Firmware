@@ -46,6 +46,8 @@
 #define INK_P_BIT            (1<<1) 
 
 extern void ink_init();        // Initialize IO
+extern void ink_reset(void);  // reset data buffer pointer to start
+extern void ink_send(unsigned int n);  // send data to buffer
 extern void ink_fire(unsigned int n);  // Fire nozzle [n] (1..12)
 extern void ink_enable(unsigned int n); // bitmask of nozzles to enable
 extern void ink_set_pulse_length(unsigned int len); // set pulse length (in approx 500nsec units)
