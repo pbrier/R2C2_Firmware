@@ -1238,10 +1238,12 @@ eParseResult process_gcode_command()
 
 // M702: Write data to inkshield buffer. We use the "filename" variable to hold the string to send, (it is HEX encoded, xAABB..)
 // if S is specified, reset the buffer pointer (start new line)
-      case 702:   
-        ink_reset();
+      case 702: 
         send_hex(next_target.filename);
         break;
+      case 703: // reset the queue
+          ink_reset();
+          break;
       // unknown mcode: spit an error
       default:
       serial_writestr("E: Bad M-code ");
